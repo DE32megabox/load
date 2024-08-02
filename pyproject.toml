@@ -13,7 +13,9 @@ dependencies = [
 requires-python = "==3.9.*"
 readme = "README.md"
 license = {text = "MIT"}
-
+[project.urls]
+Homepage = "https://github.com/DE32megabox/load"
+Issue = "https://github.com/DE32megabox/load/issues"
 
 [tool.pdm]
 distribution = false
