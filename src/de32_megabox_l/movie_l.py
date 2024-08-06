@@ -12,7 +12,7 @@ def make_million_chart():
     #영화별 데이터 생성 이후 show_million_chart 호출
     
     parquet_paths = Path("~/megabox/tmp/transform_parquet").glob("*.parquet")
-    m_df = []
+    m_df = {}
 
     for parquet_path in parquet_paths:
         df = pq.read_table(parquet_path).to_pandas() # import dfs
