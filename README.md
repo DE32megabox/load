@@ -31,3 +31,6 @@ source .venv/bin/activate
 - 모든 데이터는 parquet 파일로 저장되며 일자별로 디렉토리가 자동생성되어집니다.
 - https://github.com/DE32megabox/ 일련과정의 데이터는 2021년의 데이터를 기준으로 작업됩니다.
 
+## 결과물
+2021년 기준, 관객수 100만을 돌파한 영화를 출력합니다. 100만 관객을 돌파한 날짜와 기간을 함께 출력합니다.
+![image](https://github.com/user-attachments/assets/1637e57d-5cff-4265-a9fb-fae25937868b)
