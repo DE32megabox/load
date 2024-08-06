@@ -1,5 +1,5 @@
 [project]
-name = "DE32_megabox_L"
+name = "load"
 version = "3.0.0"
 description = "Default template for PDM package"
 authors = [
