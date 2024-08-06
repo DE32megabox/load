@@ -3,17 +3,8 @@ import os
 import pyarrow.parquet as pq
 from pathlib import Path
 from datetime import datetime, timedelta
-def read2par():
-    base_dir="~/megabox/tmp/transform_parquet"
-    parquet_pattern = Path(base_dir) / "load_dt=*"
-    parquet_files = list(parquet_pattern.glob("*.parquet"))
-
-    if not parquet_files:
-        raise FileNotFoundError(f"No parquet files found in {base_dir}")
-
-    dataset = pq.ParquetDataset(parquet_files)
-    table = dataset.read()
-    df = table.to_pandas()
+def read2par(path="~/megabox/tmp/transform_parquet"):
+    df = pd.read_parquet(f"{path}")
     return df
 
 def make_million_chart():
@@ -23,32 +14,31 @@ def make_million_chart():
     #새로운 df에는 영화제목, 해당 일자, 연말기준 누적관객수, 연말기준 누적매출액만 저장
     #영화별 데이터 생성 이후 show_million_chart 호출
     
+    #num_cols = ['rnum', 'movieNm', 'openDt', 'salesAmt',  'audiCnt']    
+    #순번, 영화명(국문), 영화개봉일, 당일매출액, 당일관객수
     m_df = {}
 
-    for parquet_path in parquet_paths:
-        df = read2par()
-        for _, row in df.iterrows():
-            movie_cd = row["movieCd"]
-            daily_audience = int(row["audiCnt"])  # 문자열을 정수로 변환
-            daily_revenue = int(row["salesAmt"])  # 문자열을 정수로 변환
-            cumulative_audience = int(row["audiAcc"])  # 문자열을 정수로 변환
-            cumulative_revenue = int(row["salesAcc"])  # 문자열을 정수로 변환
-            show_date = row["openDt"]
+    df = read2par()
+    for _, row in df.iterrows():
+        #movie_cd = row["movieCd"]
+        daily_audience = int(row["audiCnt"])  # 문자열을 정수로 변환
+        daily_revenue = int(row["salesAmt"])  # 문자열을 정수로 변환
+        show_date = row["openDt"]
 
-            if movie_cd not in m_df:
-                m_df[movie_cd] = {
-                    "영화 제목": row["movieNm"],
-                    "100만 관객수 돌파 일자": None,
-                    "누적 관객수" : 0,
-                    "누적 매출액" : 0,
-                    "첫 상영일자" : show_date,
-                }
+        if movie_cd not in m_df:
+             m_df[movie_cd] = {
+                "영화 제목": row["movieNm"],
+                "100만 관객수 돌파 일자": None,
+                "누적 관객수" : 0,
+                "누적 매출액" : 0,
+                "첫 상영일자" : show_date,
+            }
 
-            m_df[movie_cd]["누적 관객수"] += daily_audience
-            m_df[movie_cd]["누적 매출액"] += daily_revenue
+        m_df[movie_cd]["누적 관객수"] += daily_audience
+        m_df[movie_cd]["누적 매출액"] += daily_revenue
 
-            if m_df[movie_cd]["누적 관객수"] >= 1000000 and m_df[movie_cd]["100만 관객수 돌파 일자"] is None:
-                m_df[movie_cd]["100만 관객수 돌파 일자"] = show_date
+        if m_df[movie_cd]["누적 관객수"] >= 1000000 and m_df[movie_cd]["100만 관객수 돌파 일자"] is None:
+            m_df[movie_cd]["100만 관객수 돌파 일자"] = show_date
     # 12월 31일까지 상영된 영화 중 100만 관객을 돌파한 영화만 필터링
     m_df = {
         movie_cd: data
@@ -98,6 +88,8 @@ def save2parquet(df: pd.DataFrame) -> None:
     df.to_parquet(save_path, index=False)
     
 
-df = read2par()
-print(df.head(5))
+df = make_million_chart()
+print_df(df)
+save2parquet(df)
+
 
