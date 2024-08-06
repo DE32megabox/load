@@ -3,6 +3,18 @@ import os
 import pyarrow.parquet as pq
 from pathlib import Path
 from datetime import datetime, timedelta
+def read2par():
+    base_dir="~/megabox/tmp/transform_parquet"
+    parquet_pattern = Path(base_dir) / "load_dt=*"
+    parquet_files = list(parquet_pattern.glob("*.parquet"))
+
+    if not parquet_files:
+        raise FileNotFoundError(f"No parquet files found in {base_dir}")
+
+    dataset = pq.ParquetDataset(parquet_files)
+    table = dataset.read()
+    df = table.to_pandas()
+    return df
 
 def make_million_chart():
     #TODO
@@ -11,12 +23,10 @@ def make_million_chart():
     #새로운 df에는 영화제목, 해당 일자, 연말기준 누적관객수, 연말기준 누적매출액만 저장
     #영화별 데이터 생성 이후 show_million_chart 호출
     
-    parquet_paths = Path("~/megabox/tmp/transform_parquet").glob("*.parquet")
     m_df = {}
 
     for parquet_path in parquet_paths:
-        df = pq.read_table(parquet_path).to_pandas() # import dfs
-
+        df = read2par()
         for _, row in df.iterrows():
             movie_cd = row["movieCd"]
             daily_audience = int(row["audiCnt"])  # 문자열을 정수로 변환
@@ -40,19 +50,20 @@ def make_million_chart():
             if m_df[movie_cd]["누적 관객수"] >= 1000000 and m_df[movie_cd]["100만 관객수 돌파 일자"] is None:
                 m_df[movie_cd]["100만 관객수 돌파 일자"] = show_date
     # 12월 31일까지 상영된 영화 중 100만 관객을 돌파한 영화만 필터링
-    m_dt = {
+    m_df = {
         movie_cd: data
-        for movie_cd, data in m_dt.items()
-        if data["100만 돌파 일자"] is not None
+        for movie_cd, data in m_df.items()
+        if data["100만 관객수 돌파 일자"] is not None
     }
 
     # 결과 DataFrame 생성
-    result_df = pd.DataFrame(m_dt).T
+    result_df = pd.DataFrame(m_df).T
     result_df = result_df.rename_axis("movieCd").reset_index()
 
     # 100만 돌파 소요 시간 계산 (단위: 일)
+    print(result_df)
     result_df["100만 돌파 소요 시간"] = (
-        pd.to_datetime(result_df["100만 돌파 일자"], format="%Y%m%d")
+        pd.to_datetime(result_df["100만 관객수 돌파 일자"], format="%Y%m%d")
         - pd.to_datetime(result_df["첫 상영일자"], format="%Y%m%d")
     ).dt.days
 
@@ -87,4 +98,6 @@ def save2parquet(df: pd.DataFrame) -> None:
     df.to_parquet(save_path, index=False)
     
 
+df = read2par()
+print(df.head(5))
 
